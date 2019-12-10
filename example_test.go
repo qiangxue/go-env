@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Host string
-	Port int
+	Host     string
+	Port     int
 	Password string `env:",secret"`
 }
 
