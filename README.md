@@ -91,9 +91,9 @@ type Config struct {
 }
 
 func main() {
-	_ = os.Setenv("API_HOST", "127.0.0.1")
-	_ = os.Setenv("API_PORT", "8080")
-	_ = os.Setenv("API_PASSWORD", "test")
+	_ = os.Setenv("API_ES_HOST", "127.0.0.1")
+	_ = os.Setenv("API_ES_PORT", "8080")
+	_ = os.Setenv("API_ES_PASSWORD", "test")
 
 	var cfg Config
 	loader := env.New("API_", log.Printf)
