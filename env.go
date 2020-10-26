@@ -46,7 +46,7 @@ var (
 	// TagName specifies the tag name for customizing struct field names when loading environment variables
 	TagName = "env"
 
-	// nameRegex is used to convert a string from camelCase into snake format
+	// nameRegex is used to convert a string from camelCase into snake case format
 	nameRegex = regexp.MustCompile(`([^A-Z_])([A-Z])`)
 	// loader is the default loader used by the "Load" function at the package level.
 	loader = New("APP_", log.Printf)
@@ -81,8 +81,8 @@ func Load(structPtr interface{}) error {
 // Load uses the following rules to determine what name should be used to look up the value for a struct field:
 // - If the field has an "env" tag, use the tag value as the name, unless the tag is "-" in which case it means
 //   the field should be skipped.
-// - If the field has no "env" tag, turn the field name into snake format and use that as the name.
-// - Names are turned into upper case and prefixed with the specified prefix.
+// - If the field has no "env" tag, turn the field name into UPPER_SNAKE_CASE format and use that as the name.
+// - Names are prefixed with the specified prefix.
 //
 // The following types of struct fields are supported:
 // - types implementing Setter, TextUnmarshaler, BinaryUnmarshaler: the corresponding interface method will be used
@@ -128,7 +128,7 @@ func (l *Loader) Load(structPtr interface{}) error {
 			continue
 		}
 
-		name = l.prefix + strings.ToUpper(name)
+		name = l.prefix + name
 
 		if value, ok := l.lookup(name); ok {
 			logValue := value
@@ -168,14 +168,14 @@ func getName(tag string, field string) (string, bool) {
 	secret := nameLen < len(tag)
 
 	if nameLen == 0 {
-		name = camelCaseToSnake(field)
+		name = camelCaseToUpperSnakeCase(field)
 	}
 	return name, secret
 }
 
-// camelCaseToSnake converts a name from camelCase format into snake format.
-func camelCaseToSnake(name string) string {
-	return nameRegex.ReplaceAllString(name, "${1}_$2")
+// camelCaseToUpperSnakeCase converts a name from camelCase format into UPPER_SNAKE_CASE format.
+func camelCaseToUpperSnakeCase(name string) string {
+	return strings.ToUpper(nameRegex.ReplaceAllString(name, "${1}_$2"))
 }
 
 // setValue assigns a string value to a reflection value using appropriate string parsing and conversion logic.

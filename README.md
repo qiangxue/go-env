@@ -27,7 +27,7 @@ go get github.com/qiangxue/go-env
 
 ### Loading From Environment Variables
 
-The easiest way of using go-env is to call `env.Load()`, like the following: 
+The easiest way of using go-env is to call `env.Load()`, like the following:
 
 ```go
 package main
@@ -66,10 +66,9 @@ a struct field with an environment variable:
 - Only public struct fields will be populated
 - If the field has an `env` tag, use the tag value as the name, unless the tag value is `-` in which case it means
   the field should NOT be populated.
-- If the field has no `env` tag, turn the field name into snake format and use that as the name. For example,
-  a field name `HostName` will be turned into `Host_Name`, and `MyURL` becomes `My_URL`.
-- Names are turned into upper case and prefixed with the specified prefix when they are used to look up
-  in the environment variables.
+- If the field has no `env` tag, turn the field name into UPPER_SNAKE_CASE format and use that as the name. For example,
+  a field name `HostName` will be turned into `HOST_NAME`, and `MyURL` becomes `MY_URL`.
+- Names are prefixed with the specified prefix when they are used to look up in the environment variables.
 
 By default, prefix `APP_` will be used. You can customize the prefix by using `env.New()` to create
 a customized loader. For example,
@@ -111,7 +110,7 @@ func main() {
 ```
 
 In the above code, the `Password` field is tagged as `secret`. The log function respects this flag by masking
-the field value when logging it in order not to reveal sensitive information. 
+the field value when logging it in order not to reveal sensitive information.
 
 By setting the prefix to an empty string, you can disable the name prefix completely.
 
@@ -119,16 +118,16 @@ By setting the prefix to an empty string, you can disable the name prefix comple
 ### Data Parsing Rules
 
 Because the values of environment variables are strings, if the corresponding struct fields are of different types,
-go-env will convert the string values into appropriate types before assigning them to the struct fields. 
+go-env will convert the string values into appropriate types before assigning them to the struct fields.
 
 - If a struct contains embedded structs, the fields of the embedded structs will be populated like they are directly
-under the containing struct. 
+under the containing struct.
 
 - If a struct field type implements `env.Setter`, `env.TextMarshaler`, or `env.BinaryMarshaler` interface,
 the corresponding interface method will be used to load a string value into the field.
 
 - If a struct field is of a primary type, such as `int`, `string`, `bool`, etc., a string value will be parsed
-accordingly and assigned to the field. For example, the string value `TRUE` can be parsed correctly into a 
+accordingly and assigned to the field. For example, the string value `TRUE` can be parsed correctly into a
 boolean `true` value, while `TrUE` will cause a parsing error.
 
 - If a struct field is of a complex type, such as map, slice, struct, the string value will be treated as a JSON

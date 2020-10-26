@@ -126,24 +126,24 @@ func Test_setValue(t *testing.T) {
 	}
 }
 
-func Test_camelCaseToSnake(t *testing.T) {
+func Test_camelCaseToUpperSnakeCase(t *testing.T) {
 	tests := []struct {
 		tag      string
 		input    string
 		expected string
 	}{
-		{"t1", "test", "test"},
-		{"t2", "MyName", "My_Name"},
-		{"t3", "My2Name", "My2_Name"},
-		{"t4", "MyID", "My_ID"},
-		{"t5", "My_Name", "My_Name"},
-		{"t6", "MyFullName", "My_Full_Name"},
-		{"t7", "URLName", "URLName"},
-		{"t8", "MyURLName", "My_URLName"},
+		{"t1", "test", "TEST"},
+		{"t2", "MyName", "MY_NAME"},
+		{"t3", "My2Name", "MY2_NAME"},
+		{"t4", "MyID", "MY_ID"},
+		{"t5", "My_Name", "MY_NAME"},
+		{"t6", "MyFullName", "MY_FULL_NAME"},
+		{"t7", "URLName", "URLNAME"},
+		{"t8", "MyURLName", "MY_URLNAME"},
 	}
 
 	for _, test := range tests {
-		output := camelCaseToSnake(test.input)
+		output := camelCaseToUpperSnakeCase(test.input)
 		assert.Equal(t, test.expected, output, test.tag)
 	}
 }
@@ -156,11 +156,11 @@ func Test_getName(t *testing.T) {
 		name   string
 		secret bool
 	}{
-		{"t1", "", "Name", "Name", false},
-		{"t2", "", "MyName", "My_Name", false},
+		{"t1", "", "Name", "NAME", false},
+		{"t2", "", "MyName", "MY_NAME", false},
 		{"t3", "NaME", "Name", "NaME", false},
 		{"t4", "NaME,secret", "Name", "NaME", true},
-		{"t5", ",secret", "Name", "Name", true},
+		{"t5", ",secret", "Name", "NAME", true},
 		{"t6", "NameWith,Comma", "Name", "NameWith,Comma", false},
 		{"t7", "NameWith,Comma,secret", "Name", "NameWith,Comma", true},
 	}
