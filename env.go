@@ -161,14 +161,16 @@ func indirect(v reflect.Value) reflect.Value {
 
 // getName generates the environment variable name from a struct field tag and the field name.
 func getName(tag string, field string) (string, bool) {
-	secret := false
-	if idx := strings.Index(tag, ","); idx != -1 {
-		tag, secret = tag[:idx], tag[idx+1:] == "secret"
+	name := strings.TrimSuffix(tag, ",secret")
+	nameLen := len(name)
+
+	// If the `,secret` suffix was found, it would have been trimmed, so the length should be different.
+	secret := nameLen < len(tag)
+
+	if nameLen == 0 {
+		name = camelCaseToSnake(field)
 	}
-	if tag == "" {
-		return camelCaseToSnake(field), secret
-	}
-	return tag, secret
+	return name, secret
 }
 
 // camelCaseToSnake converts a name from camelCase format into snake format.

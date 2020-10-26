@@ -6,11 +6,12 @@ package env
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_indirect(t *testing.T) {
@@ -160,7 +161,8 @@ func Test_getName(t *testing.T) {
 		{"t3", "NaME", "Name", "NaME", false},
 		{"t4", "NaME,secret", "Name", "NaME", true},
 		{"t5", ",secret", "Name", "Name", true},
-		{"t6", "NaME,", "Name", "NaME", false},
+		{"t6", "NameWith,Comma", "Name", "NameWith,Comma", false},
+		{"t7", "NameWith,Comma,secret", "Name", "NameWith,Comma", true},
 	}
 
 	for _, test := range tests {
