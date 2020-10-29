@@ -36,6 +36,11 @@ type (
 		// Set sets the object with a string value.
 		Set(value string) error
 	}
+
+	options struct {
+		optional bool
+		secret   bool
+	}
 )
 
 var (
@@ -123,7 +128,7 @@ func (l *Loader) Load(structPtr interface{}) error {
 			continue
 		}
 
-		name, secret := getName(ft.Tag.Get(TagName), ft.Name)
+		name, options := getName(ft.Tag.Get(TagName), ft.Name)
 		if name == "-" {
 			continue
 		}
@@ -133,7 +138,7 @@ func (l *Loader) Load(structPtr interface{}) error {
 		if value, ok := l.lookup(name); ok {
 			logValue := value
 			if l.log != nil {
-				if secret {
+				if options.secret {
 					l.log("set %v with $%v=\"***\"", ft.Name, name)
 				} else {
 					l.log("set %v with $%v=\"%v\"", ft.Name, name, logValue)
@@ -142,6 +147,8 @@ func (l *Loader) Load(structPtr interface{}) error {
 			if err := setValue(f, value); err != nil {
 				return fmt.Errorf("error reading \"%v\": %v", ft.Name, err)
 			}
+		} else if !options.optional {
+			return fmt.Errorf("missing required environment variable \"%v\"", name)
 		}
 	}
 	return nil
@@ -159,18 +166,61 @@ func indirect(v reflect.Value) reflect.Value {
 	return v
 }
 
-// getName generates the environment variable name from a struct field tag and the field name.
-func getName(tag string, field string) (string, bool) {
-	name := strings.TrimSuffix(tag, ",secret")
-	nameLen := len(name)
-
-	// If the `,secret` suffix was found, it would have been trimmed, so the length should be different.
-	secret := nameLen < len(tag)
-
-	if nameLen == 0 {
+// getName extracts the environment variable name and options from the given struct field tag or if unspecified,
+// generates the environment variable name from the given field name.
+func getName(tag string, field string) (string, options) {
+	name, options := getOptions(tag)
+	if name == "" {
 		name = camelCaseToUpperSnakeCase(field)
 	}
-	return name, secret
+	return name, options
+}
+
+// getOptions extracts the environment variable name and options from the given struct field tag.
+func getOptions(tag string) (string, options) {
+	var options options
+
+	optionNamesAndPointers := []struct {
+		name    string
+		pointer *bool
+	}{
+		{"optional", &options.optional},
+		{"secret", &options.secret},
+	}
+
+	trimmedTag := tag
+	// We do not know the order that the options will be specified in, so we need to do extra checking.
+	// `O(n^2)` but `n` is really small.
+outerLoop:
+	for {
+		for i, optionNameAndPointer := range optionNamesAndPointers {
+			var option bool
+			if trimmedTag, option = getOption(trimmedTag, optionNameAndPointer.name); option {
+				*optionNameAndPointer.pointer = option
+
+				// We found the option, so remove it from the slice and retry the rest of the options.
+				optionNamesAndPointers[i] = optionNamesAndPointers[len(optionNamesAndPointers)-1]
+				optionNamesAndPointers = optionNamesAndPointers[:len(optionNamesAndPointers)-1]
+				continue outerLoop
+			}
+		}
+
+		// We checked for all the options and none were specified, so we are done.
+		break
+	}
+
+	return trimmedTag, options
+}
+
+// getOption checks whether the given struct field tag contains the suffix for the given option and
+// returns the tag without the suffix.
+func getOption(tag string, optionName string) (string, bool) {
+	trimmedTag := strings.TrimSuffix(tag, ","+optionName)
+
+	// If the suffix for the option was found, it would have been trimmed, so the length should be different.
+	option := len(trimmedTag) < len(tag)
+
+	return trimmedTag, option
 }
 
 // camelCaseToUpperSnakeCase converts a name from camelCase format into UPPER_SNAKE_CASE format.

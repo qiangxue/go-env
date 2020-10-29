@@ -34,13 +34,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/qiangxue/go-env"
 	"os"
+
+	"github.com/qiangxue/go-env"
 )
 
 type Config struct {
-	Host string
-	Port int
+	Host     string
+	Port     int
+	Password string `env:",optional"`
 }
 
 func main() {
@@ -53,11 +55,17 @@ func main() {
 	}
 	fmt.Println(cfg.Host)
 	fmt.Println(cfg.Port)
+	fmt.Println(cfg.Password)
 	// Output:
 	// 127.0.0.1
 	// 8080
+	//
 }
 ```
+
+In the above code, the `Password` field is tagged as `optional` whereas the other fields are untagged.
+If a field is not tagged as `optional`, it is a required field, so `env.Load()` will return an error if
+the corresponding environment variable is missing.
 
 ### Environment Variable Names
 
@@ -78,9 +86,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/qiangxue/go-env"
 	"log"
 	"os"
+
+	"github.com/qiangxue/go-env"
 )
 
 type Config struct {
