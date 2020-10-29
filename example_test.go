@@ -2,15 +2,16 @@ package env_test
 
 import (
 	"fmt"
-	"github.com/qiangxue/go-env"
 	"log"
 	"os"
+
+	"github.com/qiangxue/go-env"
 )
 
 type Config struct {
 	Host     string
 	Port     int
-	Password string `env:",secret"`
+	Password string `env:",optional,secret"`
 }
 
 func Example_one() {
@@ -23,9 +24,11 @@ func Example_one() {
 	}
 	fmt.Println(cfg.Host)
 	fmt.Println(cfg.Port)
+	fmt.Println(cfg.Password)
 	// Output:
 	// 127.0.0.1
 	// 8080
+	//
 }
 
 func Example_two() {

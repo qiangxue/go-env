@@ -150,25 +150,30 @@ func Test_camelCaseToUpperSnakeCase(t *testing.T) {
 
 func Test_getName(t *testing.T) {
 	tests := []struct {
-		tag    string
-		tg     string
-		field  string
-		name   string
-		secret bool
+		tag     string
+		tg      string
+		field   string
+		name    string
+		options options
 	}{
-		{"t1", "", "Name", "NAME", false},
-		{"t2", "", "MyName", "MY_NAME", false},
-		{"t3", "NaME", "Name", "NaME", false},
-		{"t4", "NaME,secret", "Name", "NaME", true},
-		{"t5", ",secret", "Name", "NAME", true},
-		{"t6", "NameWith,Comma", "Name", "NameWith,Comma", false},
-		{"t7", "NameWith,Comma,secret", "Name", "NameWith,Comma", true},
+		{"t1", "", "Name", "NAME", options{optional: false, secret: false}},
+		{"t2", "", "MyName", "MY_NAME", options{optional: false, secret: false}},
+		{"t3", "NaME", "Name", "NaME", options{optional: false, secret: false}},
+		{"t4", "NaME,optional", "Name", "NaME", options{optional: true, secret: false}},
+		{"t5", "NaME,secret", "Name", "NaME", options{optional: false, secret: true}},
+		{"t6", ",optional", "Name", "NAME", options{optional: true, secret: false}},
+		{"t7", ",secret", "Name", "NAME", options{optional: false, secret: true}},
+		{"t8", ",optional,secret", "Name", "NAME", options{optional: true, secret: true}},
+		{"t9", ",secret,optional", "Name", "NAME", options{optional: true, secret: true}},
+		{"t10", "NameWith,Comma", "Name", "NameWith,Comma", options{optional: false, secret: false}},
+		{"t11", "NameWith,Comma,optional", "Name", "NameWith,Comma", options{optional: true, secret: false}},
+		{"t12", "NameWith,Comma,optional,secret", "Name", "NameWith,Comma", options{optional: true, secret: true}},
 	}
 
 	for _, test := range tests {
-		name, secret := getName(test.tg, test.field)
+		name, options := getName(test.tg, test.field)
 		assert.Equal(t, test.name, name, test.tag)
-		assert.Equal(t, test.secret, secret, test.tag)
+		assert.Equal(t, test.options, options, test.tag)
 	}
 }
 
@@ -207,7 +212,18 @@ func mockLookup2(name string) (string, bool) {
 
 func mockLookup3(name string) (string, bool) {
 	data := map[string]string{
-		"PORT": "a8080",
+		"HOST": "localhost",
+		"PORT": "a8080", // invalid `int`
+		"URL":  "http://example.com",
+	}
+	value, ok := data[name]
+	return value, ok
+}
+
+func mockLookup4(name string) (string, bool) {
+	data := map[string]string{
+		"PORT": "8080",
+		"URL":  "http://example.com",
 	}
 	value, ok := data[name]
 	return value, ok
@@ -232,6 +248,12 @@ type Config2 struct {
 }
 
 type Config3 struct {
+	Embedded
+}
+
+type Config4 struct {
+	Host string `env:",optional"`
+	Port int
 	Embedded
 }
 
@@ -267,12 +289,22 @@ func TestLoader_Load(t *testing.T) {
 	var cfg3 Config1
 	l = NewWithLookup("", mockLookup3, nil)
 	err = l.Load(&cfg3)
-	assert.NotNil(t, err)
+	assert.EqualError(t, err, "error reading \"Port\": strconv.ParseInt: parsing \"a8080\": invalid syntax")
 
 	var cfg4 Config3
 	l = NewWithLookup("", mockLookup3, nil)
 	err = l.Load(&cfg4)
-	assert.NotNil(t, err)
+	assert.EqualError(t, err, "error reading \"Port\": strconv.ParseInt: parsing \"a8080\": invalid syntax")
+
+	var cfg5 Config1
+	l = NewWithLookup("T_", mockLookup4, nil)
+	err = l.Load(&cfg5)
+	assert.EqualError(t, err, "missing required environment variable \"T_HOST\"")
+
+	var cfg6 Config4
+	l = NewWithLookup("", mockLookup4, nil)
+	err = l.Load(&cfg6)
+	assert.Nil(t, err)
 }
 
 func TestNew(t *testing.T) {
